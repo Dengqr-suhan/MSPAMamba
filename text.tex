@@ -1,0 +1,338 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{titlesec}  
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{cite}
+\usepackage{bm}       
+\usepackage{enumitem}
+\setlist{nosep}
+\usepackage{lettrine}
+\usepackage[colorlinks=true,
+            linkcolor=blue,
+            citecolor=blue,
+            urlcolor=blue,
+            filecolor=blue]{hyperref}
+
+% 让cite超链接包裹方括号
+\makeatletter
+\renewcommand\@cite[2]{\hypersetup{citecolor=blue}\textcolor{blue}{[#1\if@tempswa, #2\fi]}}
+\makeatother
+\documentclass[UTF8]{ctexart}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}  
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb,bm}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\gvec}[1]{\boldsymbol{#1}}
+\newcommand{\uvec}[1]{\textup{#1}}
+\usepackage{newtxtext,newtxmath}  % 替换全文字体
+\usepackage{bm}    
+\usepackage{tabularx} % 导言区引入
+\usepackage{balance}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+\documentclass{article}
+\usepackage{CJKutf8}
+
+
+
+\begin{document}
+\title{MSPAMamba: Multi-Scale Progressive Attention Mamba for Remote Sensing Image
+Semantic Segmentation}
+\author{
+     Chuang Bai, Qinrui Deng, Xingkai Yang, Rui Li, Jiayao Zhu, % 说明：占位符姓名，请替换为真实姓名（如“John Doe and Jane Smith”或“张伟 and 李明”）
+    \thanks{
+    }
+}
+
+
+% The paper headers
+\markboth{IEEE GEOSCIENCE AND REMOTE SENSING LETTERS}%
+{Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+
+% \IEEEpubid{0000--0000/00\$00.00~\copyright~2021 IEEE}
+% Remember, if you use this you must call \IEEEpubidadjcol in the second
+% column for its text to clear the IEEEpubid mark.
+
+\maketitle
+
+\begin{abstract}
+Semantic segmentation of high-resolution remote sensing images is vital in downstream applications such as land-cover mapping, urban planning, and disaster assessment. Existing Transformer-based methods suffer from the constraint between accuracy and efficiency, while the recently proposed Mamba is renowned for being efficient. Therefore, to overcome the dilemma, we propose MSPAMamba, a Multi-Scale Progressive Attention Mamba network for remote sensing image semantic segmentation. It incorporates a Multi-Scale Mamba (MSMamba) module that can efficiently capture multi-scale spatial representations through Inception-inspired parallel processing, and a Multi-Scale Progressive Attention Module (MPAM), which dynamically selects stage-adaptive attention mechanisms for optimal feature fusion. Meanwhile, the Cross Attention Fusion Mamba (CAFMamba) decoder progressively refines multi-scale features while preserving fine-grained spatial boundaries. Extensive experiments demonstrate that MSPAMamba outperforms the state-of-the-art (SOTA) methods with mIoU increased by 0.91\% on Potsdam and 0.29\% on Vaihingen while achieving high efficiency through the lightweight design, less memory footprint, and reduced computational cost.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Mamba, remote sensing, semantic segmentation, multi-scale attention, progressive fusion.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+\IEEEPARstart{S}{emantic} segmentation of remote-sensing (RS) imagery underpins land-use mapping, urban planning, environmental monitoring, and disaster response. Although modern sensors deliver abundant high-resolution satellite and aerial data, the vast spatial extent, fine-grained boundaries, and pronounced scale variation render accurate semantic discrimination challenging.
+
+Convolutional neural networks (CNNs) and their derivatives, such as fully convolutional networks (FCN) \cite{7478072}, typically rely on pixel-wise classification. U-Net \cite{10.1007/978-3-319-24574-4_28} adopts a symmetric encoder--decoder architecture and preserves high-resolution details via skip connections. Despite strong performance, these approaches struggle to capture long-range context, retain fine structures, and process large images efficiently. To alleviate this, attention mechanisms have been introduced. Transformers model long-range dependencies through self-attention; however, the quadratic complexity leads to substantial training and memory costs as inputs grow. UNetFormer \cite{WANG2022196} couples a lightweight ResNet-18 encoder with a Transformer-based decoder to reduce parameters, while Swin Transformer \cite{liu2021swintransformerhierarchicalvision} restricts self-attention to shifted local windows. CMTFNet \cite{10247595} fuses CNN-local cues with multiscale Transformer-derived global context via a multiscale attention-fusion module. Nevertheless, the intrinsic quadratic scaling of self-attention remains a bottleneck for high-resolution RS imagery.
+
+Recently, Mamba \cite{gu2024mambalineartimesequencemodeling} has emerged as an efficient sequence-modeling framework that attains linear computational complexity while preserving strong long-range dependency modeling. This has motivated the extension of state-space modeling to vision tasks \cite{liu2024vmambavisualstatespace,zhu2024visionmambaefficientvisual}. In remote sensing, RS3Mamba \cite{10556777} deploys a dual-branch design where a convolutional main path is augmented by a Visual State-Space (VSS) auxiliary path. PPMamba \cite{10769411} embeds a lightweight SS2D-driven Mamba block into a ResNet-based encoder--decoder, using multiscale pooling to inject global context into CNN features with linear complexity. HMAFNet \cite{10942386} couples a spatial--channel Mamba encoder with a parallel convolution branch and an information-guided cross-fusion decoder. Despite these advances, many Mamba-based vision backbones primarily encode coarse global context yet struggle to preserve fine local geometry, leading to blurred boundaries and missed small objects in high-resolution RS scenes.
+
+To address these challenges, we propose MSPAMamba, a Multi-Scale Progressive Attention Mamba network that integrates a ResNet-based convolutional branch with a Multi-Scale Mamba-based visual state-space branch through innovative fusion mechanisms. The architecture introduces Multi-Scale Mamba (MSMamba) module that combines Inception-based multi-scale feature extraction with parallel Mamba processing, enabling effective multi-scale representation learning. Building upon this foundation, we develop a Multi-Scale Progressive Attention Module (MPAM) that performs stage-adaptive fusion through four specialized attention operators (PFA, LNA, SRA, GCA), dynamically selecting optimal attention mechanisms based on feature scale and semantic depth. Finally, we design a Cross Attention Fusion Mamba (CAFMamba) Decoder that progressively refines multi-scale representations while preserving fine-grained spatial boundaries with minimal computational overhead.
+
+The main contributions are summarized as follows:
+\begin{enumerate}[label=\arabic*),nosep]
+    \item We propose MSPAMamba, a dual-branch encoder that fuses ResNet convolutional features with Multi-Scale Mamba representations through four-stage selective state space architecture. The MSMamba module enables parallel multi-scale feature integration for enhanced context-aware remote sensing segmentation.
+    \item We introduce MPAM for efficient cross-branch fusion via stage-adaptive attention selection. MPAM dynamically selects among four attention mechanisms (PFA, LNA, SRA, GCA) while incorporating learnable fusion weights and spatial-channel re-calibration.
+    \item We design CAFMamba Decoder that progressively refines multi-scale representations using Cross Attention Mamba blocks. The decoder maintains spatial coherence through multi-stage fusion while preserving fine-grained boundaries in complex remote sensing scenarios.
+\end{enumerate}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.35]{Pic/fig1.pdf}
+    \caption{Overall architecture of MSPAMamba. The dual-branch encoder integrates Mamba encoder with ResNet backbone through MPAM modules, followed by CAFMamba decoder for progressive feature refinement.}
+    \label{fig:Fig. 1}
+\end{figure}
+
+
+
+\section{PROPOSED METHOD}
+
+The overall architecture of MSPAMamba is illustrated in Fig.~\ref{fig:Fig. 1}. The remote sensing image $X \in \mathbb{R}^{H \times W \times 3}$ is fed in parallel to the Mamba encoder and ResNet backbone. The Mamba encoder uses $4 \times 4$ patch embedding with stride 4 to generate initial features of size $H/4 \times W/4 \times 64$. Through three patch merging stages and MSMamba processing, multi-scale features are generated with channel dimensions of 64, 128, 256, and 512 at resolutions $H/4 \times W/4$, $H/8 \times W/8$, $H/16 \times W/16$, and $H/32 \times W/32$. The ResNet backbone extracts hierarchical features with corresponding resolutions and channels. At each stage, MPAM performs dual-branch fusion using stage-adaptive attention (PFA, LNA, SRA, GCA for stages 1-4). The fused features feed into CAFMamba decoder modules for progressive refinement and final segmentation.
+
+
+\subsection{Multi-Scale Mamba (MSMamba) Module}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.46\textwidth]{Pic/fig2.pdf}
+    \caption{Multi-Scale Mamba block architecture. Left shows the standard Mamba block structure, right illustrates the four-branch parallel processing architecture of Multi-Scale Mamba block, including 1×1 convolution, 3×3 convolution, 5×5 convolution, and 3×3 max pooling branches, each followed by layer normalization and independent Mamba block processing.}
+    \label{fig:msmamba}
+\end{figure}
+
+The Multi-Scale Mamba (MSMamba) module serves as the core component of the proposed multi-scale encoder, designed to effectively capture spatial feature representations at different scales through parallel selective state-space modeling. As shown in Fig.~\ref{fig:msmamba}, the MSMamba module adopts an Inception-inspired four-branch parallel architecture~\cite{szegedy2014goingdeeperconvolutions}, decomposing input features at different spatial scales before applying Mamba-based sequence modeling.
+
+Given an input feature map $X \in \mathbb{R}^{B \times C \times H \times W}$, the four-branch structure extracts multi-scale representations through convolution operations with different receptive fields:
+\begin{align}
+X_1 &= \text{Conv}_{1 \times 1}(X) \\
+X_2 &= \text{Conv}_{3 \times 3}(\text{Conv}_{1 \times 1}(X)) \\
+X_3 &= \text{Conv}_{5 \times 5}(\text{Conv}_{1 \times 1}(X)) \\
+X_4 &= \text{Conv}_{1 \times 1}(\text{MaxPool}_{3 \times 3}(X))
+\end{align}
+where $X_1$, $X_2$, $X_3$, and $X_4$ capture point-level features, local neighborhood features, medium-range features, and pooled dimensionality-reduced features, respectively.
+
+Each branch output is subsequently processed through dedicated Mamba blocks to capture long-range spatial dependencies. Following the selective state-space modeling framework~\cite{gu2024mambalineartimesequencemodeling}, each feature map $X_i$ is first reshaped and normalized before entering Mamba processing:
+\begin{align}
+\tilde{X}_i &= \text{LayerNorm}(\text{Reshape}(X_i, [B, HW, C_i])) \\
+\hat{X}_i &= \text{Mamba}(\tilde{X}_i) + \alpha \cdot \tilde{X}_i
+\end{align}
+where $\alpha$ is a learnable skip connection parameter, and the Mamba operation implements the selective state-space mechanism with linear complexity $O(L)$ relative to sequence length $L = H \times W$.
+
+The Mamba block processes input sequences through selective scan operations, capturing spatial dependencies in multiple directions. The core mechanism includes linear embedding, depth-wise convolution, and selective state-space modeling with four-directional scanning, achieving comprehensive spatial context modeling while maintaining linear computational complexity.
+
+After parallel Mamba processing, the four branch outputs are concatenated along channels, followed by layer normalization and a projection head to produce fused multi-scale features. This design couples multi-receptive-field encoding with linear-time state-space modeling, yielding strong global context while preserving fine spatial structures in high-resolution RS imagery.
+
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.26]{Pic/fig3.pdf}
+    \caption{Multi-Scale Progressive Attention Module (MPAM) architecture. Shows the stage-adaptive attention selection mechanism of MPAM selector.}
+    \label{fig:MPAM}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.25]{Pic/1fig4.pdf}
+    \caption{Visualization comparison of four attention mechanisms, demonstrating the attention differences of different mechanisms.}
+    \label{fig:attention_vis}
+\end{figure}
+
+\subsection{Multi-Scale Progressive Attention Module (MPAM)}
+
+The Multi-Scale Progressive Attention Module (MPAM) achieves intelligent fusion of ResNet and MSMamba features through the MPAM selector. As shown in Fig.~\ref{fig:MPAM}, the MPAM selector dynamically selects four specialized attention mechanisms based on encoding stages.
+
+The computation process of Point-wise Feature Attention (PFA) is as follows:
+\begin{align}
+F_{expand} &= \text{Conv}_{1 \times 1}(X, 4C) \\
+F_{compress} &= \text{Conv}_{1 \times 1}(\text{ReLU}(\text{BN}(F_{expand})), C) \\
+\text{PFA}(X) &= X \odot \sigma(F_{compress} \odot \text{SE}(X))
+\end{align}
+
+Local Neighborhood Attention (LNA) combines depth-wise convolution with dilated convolution:
+\begin{align}
+F_{local} &= \text{Conv}_{1 \times 1}(\text{DWConv}_{3 \times 3}(X)) \\
+F_{dilated} &= \text{Conv}_{1 \times 1}(\text{DilConv}_{3 \times 3}(X, d=2)) \\
+\text{LNA}(X) &= X \odot \sigma(F_{local} + F_{dilated})
+\end{align}
+
+Spatial Range Attention (SRA) employs multi-scale large kernel convolutions:
+\begin{align}
+F_{11} &= \text{DWConv}_{11 \times 11}(X) \\
+F_{7} &= \text{DWConv}_{7 \times 7}(X) \\
+\text{SRA}(X) &= X \odot \sigma(F_{11} + F_{7})
+\end{align}
+
+Global Context Attention (GCA) utilizes dual pooling mechanisms:
+\begin{align}
+F_{global} &= \text{AvgPool}(X) + \text{MaxPool}(X) \\
+\text{GCA}(X) &= X \odot \sigma(\text{FC}(F_{global}))
+\end{align}
+
+where $\odot$ denotes element-wise multiplication and $\sigma$ represents the Sigmoid activation function. The stage-adaptive selection mechanism chooses PFA, LNA, SRA, and GCA for stages 1-4 respectively.
+
+As illustrated in Fig.~\ref{fig:attention_vis}, PFA focuses on point-wise detail features in shallow stages, LNA captures local neighborhood structures in the second stage, SRA models medium-range spatial relationships in the third stage, while GCA achieves global context understanding in deep stages. This progressive attention design effectively adapts to feature fusion requirements at different semantic levels. The attention-processed features are output through layer normalization and MLP with residual connections, achieving efficient stage-adaptive feature fusion and significantly improving remote sensing image segmentation performance.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.34]{Pic/fig5.pdf}
+    \caption{Cross Attention Fusion Mamba (CAFMamba) decoder architecture. Shows the dual-path processing structure of CAFMamba blocks, including parallel processing and fusion mechanisms of cross-attention and Mamba branches, along with progressive upsampling decoding flow.}
+    \label{fig:CAFMamba}
+\end{figure}
+
+
+\subsection{Cross Attention Fusion Mamba (CAFMamba) Decoder}
+
+The CAFMamba decoder progressively refines multi-scale representations through Cross Attention Mamba blocks, integrating multi-head self-attention with selective state-space modeling~\cite{gu2024mambalineartimesequencemodeling} to enhance boundary preservation. As shown in Fig.~\ref{fig:CAFMamba}, each CAFMamba block adopts a dual-path parallel processing architecture.
+
+The cross-attention branch employs multi-scale context extraction through three parallel $3 \times 3$ convolution branches, followed by $1 \times 1$ convolutions to process input features. The three branch outputs are fused through addition to generate key-value pairs for multi-head self-attention computation:
+
+\begin{align}
+\text{Attn} &= \text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V \\
+F_{attn} &= \text{Attn} + \text{SE}(\text{AvgPool}(X)) \odot X
+\end{align}
+
+The Mamba branch processes features through average pooling, $1 \times 1$ convolution, ReLU6 activation, and Sigmoid gating, followed by Mamba processing with residual connections:
+
+\begin{align}
+F_{mamba} &= \text{Mamba}(\text{LayerNorm}(X)) + \alpha \cdot X
+\end{align}
+
+Dual-path features are concatenated and processed through fusion convolution. The Enhanced FFN adopts a dual-branch design with $5 \times 5$ and $3 \times 3$ depth-wise convolutions, where features are processed through expansion, dual-branch convolution, and compression operations. The final output is obtained through residual connection:
+
+\begin{align}
+F_{out} &= X + \text{DropPath}(\text{Enhanced-FFN}(F_{fused}))
+\end{align}
+
+The decoder achieves effective combination of attention mechanisms and state-space modeling through this dual-path architecture, enhancing feature representation capability while maintaining computational efficiency.
+
+
+\begin{table*}[htbp]
+ \centering
+ \caption{Quantitative Comparison Results on the Potsdam Dataset. The Best Values Are in Bold.}
+ \label{tab:potsdam_detailed}
+ \renewcommand{\arraystretch}{1.5}
+ \begin{tabular}{cccccccccc}
+ \toprule
+ \textbf{Method} & \textbf{Backbone} & \textbf{Imp surf} & \textbf{Building} & \textbf{LowVeg} & \textbf{Tree} & \textbf{Car} & \textbf{mF1} & \textbf{mIoU} \\
+ \midrule
+ CMTFNet & ResNet-50 & 92.03/85.24 & 96.85/93.89 & 88.20/78.89 & 89.81/81.50 & 95.44/91.28 & 92.47 & 86.16 \\
+ UNetFormer & ResNet-18 & 91.46/84.26 & 96.60/93.42 & 87.41/77.63 & 89.04/80.25 & 94.30/89.22 & 91.76 & 84.96 \\
+ RS3Mamba & Swsl\_ResNet18 & 91.69/84.66 & 96.88/93.96 & 87.97/78.53 & 89.54/81.06 & 95.44/91.28 & 92.31 & 85.90 \\
+ PPMamba & Swsl\_ResNet18 & 92.29/85.69 & 96.57/93.36 & 87.90/78.41 & 89.93/81.71 & 95.60/91.58 & 92.46 & 86.15 \\
+ UNetMamba & ResT-Lite & 92.01/85.20 & 96.89/93.97 & 86.86/76.77 & 89.11/80.36 & 95.77/91.88 & 92.13 & 85.64 \\
+ MSPAMamba (Ours) & Swsl\_ResNet18 & \textbf{92.48}/\textbf{86.01} & \textbf{97.23}/\textbf{94.62} & \textbf{88.69}/\textbf{79.68} & \textbf{90.24}/\textbf{82.21} & \textbf{96.26}/\textbf{92.79} & \textbf{92.98} & \textbf{87.06} \\
+ \bottomrule
+ \end{tabular}
+ \end{table*}
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Quantitative Comparison Results on the Vaihingen Dataset. The Best Values Are in Bold.}
+\label{tab:vaihingen_detailed}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Method} & \textbf{Backbone} & \textbf{Params(M)} & \textbf{FLOPs(G)} & \textbf{mF1(\%)} & \textbf{mIoU(\%)} & \textbf{OA(\%)} \\
+\midrule
+CMTFNet & ResNet-50 & 30.07 & 33.07 & 90.47 & 83.11 & 94.07 \\
+UNetFormer & ResNet-18 & \textbf{11.72} & \textbf{11.74} & 90.23 & 82.72 & 93.84 \\
+RS3Mamba & Swsl\_ResNet18 & 43.32 & 82.35 & 90.68 & 83.41 & 94.13 \\
+PPMamba & Swsl\_ResNet18 & 21.70 & 68.23 & 90.92 & 83.78 & 94.03 \\
+UNetMamba & ResT-Lite & 14.76 & 15.53 & 90.95 & 83.47 & 92.51 \\
+MSPAMamba (Ours) & Swsl\_ResNet18 & 24.14 & 22.63 & \textbf{91.44} & \textbf{84.67} & \textbf{94.36} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+\section{Experimental Verifications}
+
+\subsection{Datasets and Evaluation Metrics}
+
+Our experiments are evaluated on both the Vaihingen and Potsdam datasets. Both datasets have six classes, including \textit{impervious surface}, \textit{building}, \textit{low vegetation}, \textit{tree}, \textit{car}, and \textit{clutter/background}. The Vaihingen dataset consists of 33 orthophoto images with an average size of 2494 × 2064 pixels. The images are composed of near-infrared, red, and green spectral bands with a spatial resolution of 9 cm. The Potsdam dataset contains 38 orthophoto images. Each image is 6000 × 6000 pixels and contains four spectral bands: red, green, blue, and near-infrared, with a spatial resolution of 5 cm. We use 256 × 256 sliding window to dynamically collect image patches. The stride size is set to 256 for training and 32 for testing.To evaluate performance, mean intersection over union (mIoU) and mean F1 score (mF1) are used.
+
+\subsection{Experimental Setting}
+
+All our experiments are performed using PyTorch on a single NVIDIA Tesla V100 32GB GPU. For the Vaihingen dataset, we select 16 images for training and 17 images for testing. For the Potsdam dataset, 18 images are used to train, and 14 images are used to test. In the training phase, we use the AdamW optimizer algorithm with a learning rate of 6e-4 and a weight decay parameter of 0.01. The backbone network uses a differentiated learning rate of 6e-5 with weight decay of 0.01. The training runs for a total of 50 epochs with a batch size of 8. A joint loss function combining soft cross-entropy loss and dice loss with equal weights (1.0, 1.0) is used, where both losses employ a smooth factor of 0.05. 
+
+
+\subsection{Comparison with State-of-the-Art Methods}
+
+We conduct comprehensive performance comparison on Potsdam and Vaihingen datasets, with qualitative results shown in Fig.~\ref{fig:comparison}. As shown in Table~\ref{tab:potsdam_detailed}, MSPAMamba achieved best accuracy performance in quantitative comparison, with a significant improvement of 0.52\% in mF1 and 0.91\% in mIoU. It is noteworthy that our MSPAMamba achieved SOTA in all categories. In building and car categories, MSPAMamba led the second place by 0.34\% and 0.49\% respectively in F1-score. This distinct advantage indicated that benefiting from multi-scale progressive attention, our MSPAMamba garnered excellent global perception ability, which made it capable of accurately segmenting large land covers under high-resolution conditions. The outstanding performance demonstrates significant improvement in comparison to other categories, which serves to validate the effectiveness of our proposed method in extracting global information.The proposed MSPAMamba not only achieved SOTA performance on the challenging Potsdam dataset but also performed noticeably well on the Vaihingen dataset. As shown in Table~\ref{tab:vaihingen_detailed}, in terms of accuracy, our MSPAMamba achieved improvements of 0.20\% in mF1 and 0.29\% in mIoU, while maintaining competitive efficiency through a lightweight model (24.14M parameters, 22.63G FLOPs). The results demonstrate the effectiveness of MSPAMamba in perceiving local semantic details across different datasets.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.35]{Pic/fig6.pdf}
+    \caption{Qualitative comparison results on Vaihingen and Potsdam datasets. MSPAMamba consistently produces more accurate boundary delineation and better preservation of fine-grained structures compared to competing methods.}
+    \label{fig:comparison}
+\end{figure}
+
+
+\subsection{Ablation Studies}
+
+To assess the effectiveness of the proposed MSMamba, MPAM, and CAFMamba in MSPAMamba, ablation studies were conducted on both datasets, with results listed in Table~\ref{tab:ablation}. For the sake of credibility, the baseline model was constructed by replacing all proposed modules with Mamba block.
+
+After removing the MSMamba module, the model experienced a significant reduction in performance of 0.29\% in mF1 and 0.52\% in mIoU, demonstrating the high efficiency of MSMamba in decoding complex semantic information. On both datasets, deployment of MPAM led to consistent improvements in mIoUs, respectively. However, the cost was merely a modest parameter-count increase, which further confirms the high efficiency of MPAM in enhancing the perception of local semantic information.
+
+The experimental results demonstrate that the MSMamba, MPAM, and CAFMamba modules can improve the segmentation accuracy.
+
+
+
+
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study of Different Modules}
+\label{tab:ablation}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Datasets} & \textbf{Method} & \textbf{mF1} & \textbf{mIoU} \\
+\midrule
+\multirow{5}{*}{Vaihingen} & Baseline & 90.99 & 83.93 \\
+& Baseline+MSMamba & 91.15 & 84.15 \\
+& Baseline+MPAM & 91.08 & 84.06 \\
+& Baseline+CAFMamba & 91.04 & 83.96 \\
+& Baseline+MSMamba+MPAM+CAFMamba & \textbf{91.44} & \textbf{84.67} \\
+\midrule
+\multirow{5}{*}{Potsdam} & Baseline & 92.44 & 86.13 \\
+& Baseline+MSMamba & 92.67 & 86.50 \\
+& Baseline+MPAM & 92.70 & 86.57 \\
+& Baseline+CAFMamba & 92.81 & 86.78 \\
+& Baseline+MSMamba+MPAM+CAFMamba & \textbf{92.98} & \textbf{87.06} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+
+
+\section{Conclusion}
+
+In this letter, an efficient semantic segmentation model called MSPAMamba is proposed for high-resolution remote sensing images. Considering the multiscale land covers and complex spatial information in such images, our MSPAMamba features a Multi-Scale Mamba (MSMamba) module for parallel multi-scale feature extraction, a Multi-Scale Progressive Attention Module (MPAM) for stage-adaptive feature fusion, and a Cross Attention Fusion Mamba (CAFMamba) decoder for progressive feature refinement. Extensive experiments conducted on two well-known remote sensing datasets demonstrate that MSPAMamba not only outperforms other SOTA models with mIoU improvements of 0.91\% on Potsdam and 0.29\% on Vaihingen but also achieves competitive efficiency through lightweight design. In the future, we will continue to explore multi-scale progressive attention mechanisms to further improve the accuracy and efficiency of remote sensing semantic segmentation.
+
+\bibliographystyle{IEEEtran}
+\balance
+\bibliography{references}
+\end{document}

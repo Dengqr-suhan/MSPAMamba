@@ -1,0 +1,23 @@
+Model Name,Dataset,Config Path,Params(M),Memory(MB),FLOPs,FLOPs_Raw,Status
+cmtfnet-U,potsdam,config/potsdam/CMTFNet_config.py,30.07,93.9,33.070G,33069696768.0,success
+hmafnet-U,potsdam,config/potsdam/HMAFNet_config.py,32.59,0.8,75.506G,75505818496.0,success
+mspamamba-ablation1-U,potsdam,config/potsdam/MSPAMamba_ablation1_config.py,21.39,0.0,17.228G,17228234752.0,success
+mspamamba-ablation2-U,potsdam,config/potsdam/MSPAMamba_ablation2_config.py,25.00,0.1,17.712G,17711841280.0,success
+mspamamba-ablation3-U,potsdam,config/potsdam/MSPAMamba_ablation3_config.py,25.88,98.7,17.298G,17298047744.0,success
+mspamamba-baseline-U,potsdam,config/potsdam/MSPAMamba_baseline_config.py,24.06,91.8,14.803G,14802747392.0,success
+mspamamba-U,potsdam,config/potsdam/MSPAMamba_config.py,24.14,92.1,22.633G,22632628992.0,success
+rs3mamba-U,potsdam,config/potsdam/RS3Mamba_config.py,43.32,0.1,63.300G,63300469312.0,success
+unetmamba-U,potsdam,config/potsdam/UnetMamba_config.py,14.76,0.1,15.526G,15526232064.0,success
+ppmamba-weight,potsdam,config/potsdam/ppmamba.py,21.70,82.8,49.177G,49176516015.0,success
+unetformer-r18-768crop-ms-e45,potsdam,config/potsdam/unetformer.py,11.72,44.7,11.742G,11741987392.0,success
+cmtfnet-U,vaihingen,config/vaihingen/CMTFNet_config.py,30.07,0.2,33.070G,33069696768.0,success
+hmafnet-U,vaihingen,config/vaihingen/HMAFNet_config.py,32.59,124.3,75.506G,75505818496.0,success
+mspamamba-ablation1-U,vaihingen,config/vaihingen/MSPAMamba_ablation1_config.py,21.39,81.6,17.228G,17228234752.0,success
+mspamamba-ablation2-U,vaihingen,config/vaihingen/MSPAMamba_ablation2_config.py,25.00,95.4,17.712G,17711841280.0,success
+mspamamba-ablation3-U,vaihingen,config/vaihingen/MSPAMamba_ablation3_config.py,25.88,0.0,17.298G,17298047744.0,success
+mspamamba-baseline-U,vaihingen,config/vaihingen/MSPAMamba_baseline_config.py,24.06,0.0,14.803G,14802747392.0,success
+mspamamba-U,vaihingen,config/vaihingen/MSPAMamba_config.py,24.14,92.1,22.633G,22632628992.0,success
+rs3mamba-U,vaihingen,config/vaihingen/RS3Mamba_config.py,43.32,165.3,82.354G,82354143808.0,success
+unetmamba-U,vaihingen,config/vaihingen/UnetMamba_config.py,14.76,56.3,15.526G,15526232064.0,success
+ppmamba-weight,vaihingen,config/vaihingen/ppmamba.py,21.70,82.8,68.230G,68230190511.0,success
+unetformer-r18-768crop-ms-e45,vaihingen,config/vaihingen/unetformer.py,11.72,44.7,11.742G,11741987392.0,success
